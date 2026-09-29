@@ -139,21 +139,23 @@ const POS_XY = [
 ];
 
 let cfg = { lang: 'ja', meth: 'pri', me: null, mode: 'normal' };
-let run = 0;
-let gameOverActive = false; // Hardモードで間違えた/時間切れになった瞬間trueにし、以降のフェーズ進行を止める
-let currentMarkers = {};
-let firstGroup = [];
-let secondGroup = [];   // 塔を踏まないもう一方の組（4・5・6・7回目に踏む組）
-let standingPos = {};
-let standingSlot = {};
-let towerMates = {};
-let towerSide = {};
-let phaseIndex = 0;
-let markerTimer = null;
-let currentRotation = 0;
-let currentPastFuture = null; // 'past' | 'future' | null
-let towerTags = {}; // pid -> 'bind1' | 'bind2' | 'stop1' | 'stop2'（3回目の塔処理後に確定）
-let tagsVisible = false; // bind/stopタグの表示可否：3回目〜4回目開始前 と 8回目〜 のみtrue
+let state = {
+    run: 0,
+    gameOverActive: false, // Hardモードで間違えた/時間切れになった瞬間trueにし、以降のフェーズ進行を止める
+    currentMarkers: {},
+    firstGroup: [],
+    secondGroup: [],   // 塔を踏まないもう一方の組（4・5・6・7回目に踏む組）
+    standingPos: {},
+    standingSlot: {},
+    towerMates: {},
+    towerSide: {},
+    phaseIndex: 0,
+    markerTimer: null,
+    currentRotation: 0,
+    currentPastFuture: null, // 'past' | 'future' | null
+    towerTags: {}, // pid -> 'bind1' | 'bind2' | 'stop1' | 'stop2'（3回目の塔処理後に確定）
+    tagsVisible: false // bind/stopタグの表示可否：3回目〜4回目開始前 と 8回目〜 のみtrue
+};
 
 const MARKER_FILL = '#ff9a1a';
 const MARKER_STROKE = '#c46a00';
@@ -208,9 +210,9 @@ function computeFirstGroup(markers) {
 }
 
 // ラウンド番号（1〜8）から、そのラウンドで塔を踏む組を返す
-// 1・2・3・8回目＝頭割りがついたペア(firstGroup)、4・5・6・7回目＝もう一方の組(secondGroup)
+// 1・2・3・8回目＝頭割りがついたペア(state.firstGroup)、4・5・6・7回目＝もう一方の組(state.secondGroup)
 function groupForRound(n) {
-    return [1, 2, 3, 8].includes(n) ? firstGroup : secondGroup;
+    return [1, 2, 3, 8].includes(n) ? state.firstGroup : state.secondGroup;
 }
 
 function reassignAfterTower(players, kind) {
@@ -218,7 +220,7 @@ function reassignAfterTower(players, kind) {
     const types = kind === 'odd'
         ? shuffle([cone, cone, circ, circ])
         : shuffle([stack, stack, cone, circ]);
-    shuffle(players).forEach((pid, i) => { currentMarkers[pid] = types[i]; });
+    shuffle(players).forEach((pid, i) => { state.currentMarkers[pid] = types[i]; });
 }
 
 // 3回目の塔処理後、扇の2人にbind1/bind2、円の2人にstop1/stop2をランダムに1人ずつ割り当てる。
@@ -227,10 +229,10 @@ function assignTowerTags(group, markers) {
     const { cone, circ } = markerNames();
     const cones = shuffle(group.filter(pid => markers[pid] === cone));
     const circs = shuffle(group.filter(pid => markers[pid] === circ));
-    if (cones[0]) towerTags[cones[0]] = 'bind1';
-    if (cones[1]) towerTags[cones[1]] = 'bind2';
-    if (circs[0]) towerTags[circs[0]] = 'stop1';
-    if (circs[1]) towerTags[circs[1]] = 'stop2';
+    if (cones[0]) state.towerTags[cones[0]] = 'bind1';
+    if (cones[1]) state.towerTags[cones[1]] = 'bind2';
+    if (circs[0]) state.towerTags[circs[0]] = 'stop1';
+    if (circs[1]) state.towerTags[circs[1]] = 'stop2';
 }
 
 /**
@@ -266,19 +268,19 @@ function assignOdd1Slots(markers, steppingGroup, towerNum = null) {
     // 南調整モード：直前の偶数回で同じ塔側にいたかどうかで判定する。
     // 2人とも前回データがある場合のみ有効（1回目の頭割りは前回データが無いので対象外）。
     const useSouthAdjust = cfg.meth === 'south' && towerNum !== 1 &&
-        remaining.length === 2 && towerSide[remaining[0]] && towerSide[remaining[1]];
+        remaining.length === 2 && state.towerSide[remaining[0]] && state.towerSide[remaining[1]];
 
     if (useSouthAdjust) {
         const [p1, p2] = remaining;
-        const side1 = towerSide[p1];
-        const side2 = towerSide[p2];
+        const side1 = state.towerSide[p1];
+        const side2 = state.towerSide[p2];
 
         if (side1 === side2) {
             // 直前の偶数回で同じ塔内に二人とも予兆がついた＝被り。
             // より南（Y座標が大きい）にいた方だけ反対の塔の頭割りへ移動し、
             // もう一方はそのまま元の塔側の頭割りを維持する。
-            const y1 = standingPos[p1] ? standingPos[p1][1] : 0;
-            const y2 = standingPos[p2] ? standingPos[p2][1] : 0;
+            const y1 = state.standingPos[p1] ? state.standingPos[p1][1] : 0;
+            const y2 = state.standingPos[p2] ? state.standingPos[p2][1] : 0;
             const southPid = y1 > y2 ? p1 : p2;
             const northPid = southPid === p1 ? p2 : p1;
             const northSlot = side1 === 'L' ? 1 : 2;
@@ -400,7 +402,7 @@ function assignFinalTowerSlots(steppingGroup) {
     const escort = ID.filter(pid => !steppingSet.has(pid));
 
     steppingGroup.forEach(pid => {
-        switch (towerTags[pid]) {
+        switch (state.towerTags[pid]) {
             case 'bind1': slotMap[pid] = 3; break;  // 左塔・扇
             case 'bind2': slotMap[pid] = 4; break;  // 右塔・扇
             case 'stop1': slotMap[pid] = 1; break;  // 左塔・円
@@ -425,7 +427,7 @@ function assignFinalTowerSlots(steppingGroup) {
 
 /**
  * 南調整モード専用（優先順モードは assignEvenSlots を使用）。
- * 2・6回目（＝直前の奇数回で塔を踏んでおり、towerSide/towerMatesが確定している場合）専用。
+ * 2・6回目（＝直前の奇数回で塔を踏んでおり、state.towerSide/towerMatesが確定している場合）専用。
  * 4回目（後組が初めて塔を踏む偶数回で、参照できる前回データが無い）はこの関数を使わず
  * assignEvenSlots（優先順と同じロジック）を使う。
  *
@@ -451,15 +453,15 @@ function resolveEven2Slot(pid, markers, steppingGroup) {
         return 5;
     }
 
-    const mates = (towerMates[pid] || []).filter(p => p !== pid && steppingGroup.includes(p));
-    const mySide = towerSide[pid];
+    const mates = (state.towerMates[pid] || []).filter(p => p !== pid && steppingGroup.includes(p));
+    const mySide = state.towerSide[pid];
     const sameMarkMates = mates.filter(p => markers[p] === mine);
 
     let goLeft;
     if (sameMarkMates.length > 0) {
-        const myY = standingPos[pid] ? standingPos[pid][1] : 0;
+        const myY = state.standingPos[pid] ? state.standingPos[pid][1] : 0;
         const iAmSouth = sameMarkMates.every(p => {
-            const py = standingPos[p] ? standingPos[p][1] : 0;
+            const py = state.standingPos[p] ? state.standingPos[p][1] : 0;
             return myY > py;
         });
         // 被った場合：南側の人だけ反対の塔へ移動、北側の人はそのまま。
@@ -493,8 +495,8 @@ function slotsToPositions(slotMap, table) {
                 : [base[0] + (n % 2 ? 20 : -20), base[1] + (n > 1 ? 16 : 0)];
         }
     });
-    standingSlot = slots;
-    standingPos = pos;
+    state.standingSlot = slots;
+    state.standingPos = pos;
     return pos;
 }
 
@@ -518,35 +520,35 @@ function computeStandingPositions(phase, markers, steppingGroup, towerNum) {
         }
         slotsToPositions(slotMap, SLOT_EVEN);
     }
-    return standingPos;
+    return state.standingPos;
 }
 
 function recordTowerMates() {
-    towerMates = {};
-    towerSide = {};
+    state.towerMates = {};
+    state.towerSide = {};
     const left = [];
     const right = [];
     ID.forEach(pid => {
-        const s = standingSlot[pid];
+        const s = state.standingSlot[pid];
         if (s === 1 || s === 3) {
-            towerSide[pid] = 'L';
+            state.towerSide[pid] = 'L';
             left.push(pid);
         } else if (s === 2 || s === 4 || s === 7) {
-            towerSide[pid] = 'R';
+            state.towerSide[pid] = 'R';
             right.push(pid);
         } else {
-            towerSide[pid] = null;
+            state.towerSide[pid] = null;
         }
     });
-    left.forEach(pid => { towerMates[pid] = [...left]; });
-    right.forEach(pid => { towerMates[pid] = [...right]; });
+    left.forEach(pid => { state.towerMates[pid] = [...left]; });
+    right.forEach(pid => { state.towerMates[pid] = [...right]; });
     ID.forEach(pid => {
-        if (!towerMates[pid]) towerMates[pid] = [pid];
+        if (!state.towerMates[pid]) state.towerMates[pid] = [pid];
     });
 }
 
 function myCorrectXY() {
-    return standingPos[cfg.me] || null;
+    return state.standingPos[cfg.me] || null;
 }
 
 function isClickCorrect(x, y) {
@@ -595,12 +597,12 @@ function showResultMark(ok) {
     setTimeout(() => g.remove(), durationSec * 1000);
 }
 
-// pidが今回どちらの塔（左右）にいるかを standingSlot から求め、
+// pidが今回どちらの塔（左右）にいるかを state.standingSlot から求め、
 // steppingGroup（今回塔を踏む4人）の中から同じ塔にいる人（pid自身も含む）を返す。
 // 南調整モードで「自分と同じ塔内の人」の予兆を表示するために使用。
 function sameTowerSteppers(pid, steppingGroup) {
     const sideOf = p => {
-        const s = standingSlot[p];
+        const s = state.standingSlot[p];
         if (s === 1 || s === 3) return 'L';
         if (s === 2 || s === 4) return 'R';
         return null;
@@ -626,8 +628,8 @@ function highlightCorrectPoint(correctXY) {
 // 全ての点をクリック不可にし（正解位置は既に緑表示済み）、
 // メッセージを「ゲームオーバー」にし、「最初から」ボタンだけを表示する。
 function triggerGameOver() {
-    gameOverActive = true;
-    if (markerTimer) { clearTimeout(markerTimer); markerTimer = null; }
+    state.gameOverActive = true;
+    if (state.markerTimer) { clearTimeout(state.markerTimer); state.markerTimer = null; }
     const sv = $('sv');
     [...sv.querySelectorAll('.pt')].forEach(pt => {
         pt.onclick = null;
@@ -680,7 +682,7 @@ $('b-go').onclick = () => {
     startSelectPos();
 };
 $('b-again').onclick = () => {
-    run++;
+    state.run++;
     clearMarkers();
     $('game').classList.add('hide');
     $('start').classList.remove('hide');
@@ -781,15 +783,15 @@ function createTagIcon(tag, x, y, size = 28) {
 }
 
 // 3回目の塔処理後に確定したbind/stopタグを、現在の立ち位置の上にずっと表示し続ける。
-// 自分が後組（secondGroup）のときは無関係なので表示しない。
+// 自分が後組（state.secondGroup）のときは無関係なので表示しない。
 function renderPersistentTags() {
-    if (!tagsVisible) return;
-    if (!firstGroup.includes(cfg.me)) return;
+    if (!state.tagsVisible) return;
+    if (!state.firstGroup.includes(cfg.me)) return;
     const sv = $('sv');
-    Object.keys(towerTags).forEach(pid => {
-        const pos = standingPos[pid];
+    Object.keys(state.towerTags).forEach(pid => {
+        const pos = state.standingPos[pid];
         if (!pos) return;
-        sv.append(createTagIcon(towerTags[pid], pos[0], pos[1] - 55, 36));
+        sv.append(createTagIcon(state.towerTags[pid], pos[0], pos[1] - 55, 36));
     });
 }
 
@@ -797,10 +799,10 @@ function renderPersistentTags() {
 // （8回目の画面ではタグを表示しないので、この一度きりの演出でしか見せない）
 // 対象外（自分が後組）の場合は、従来通りdefaultMsだけ待つ。
 async function revealOwnTagAfterRound7(defaultMs) {
-    if (firstGroup.includes(cfg.me) && towerTags[cfg.me]) {
-        const pos = standingPos[cfg.me];
+    if (state.firstGroup.includes(cfg.me) && state.towerTags[cfg.me]) {
+        const pos = state.standingPos[cfg.me];
         if (pos) {
-            $('sv').append(createTagIcon(towerTags[cfg.me], pos[0], pos[1] - 55, 36));
+            $('sv').append(createTagIcon(state.towerTags[cfg.me], pos[0], pos[1] - 55, 36));
         }
         await new Promise(r => setTimeout(r, 5000));
     } else {
@@ -809,9 +811,9 @@ async function revealOwnTagAfterRound7(defaultMs) {
 }
 
 function clearMarkers() {
-    if (markerTimer) {
-        clearTimeout(markerTimer);
-        markerTimer = null;
+    if (state.markerTimer) {
+        clearTimeout(state.markerTimer);
+        state.markerTimer = null;
     }
     const sv = $('sv');
     [...sv.querySelectorAll('.head-marker')].forEach(e => e.remove());
@@ -823,7 +825,7 @@ function drawAllMarkersOnPos() {
     const sv = $('sv');
     ID.forEach((pid, i) => {
         const [x, y] = POS_XY[i];
-        sv.append(createMarkerIcon(currentMarkers[pid], x, y - 50, 26));
+        sv.append(createMarkerIcon(state.currentMarkers[pid], x, y - 50, 26));
     });
 }
 
@@ -838,7 +840,7 @@ function showNextMarkersOnStandingPositions(durationMs = 5000, targets = null) {
 
     const byKey = {};
     targets.forEach(pid => {
-        const xy = standingPos[pid];
+        const xy = state.standingPos[pid];
         if (!xy) return;
         const key = xy[0] + ',' + xy[1];
         if (!byKey[key]) byKey[key] = [];
@@ -848,7 +850,7 @@ function showNextMarkersOnStandingPositions(durationMs = 5000, targets = null) {
     Object.keys(byKey).forEach(key => {
         const group = byKey[key];
         group.forEach((pid, i) => {
-            const base = standingPos[pid];
+            const base = state.standingPos[pid];
             const x = base[0] + (group.length > 1 ? (i - (group.length - 1) / 2) * 36 : 0);
             const y = base[1];
 
@@ -867,12 +869,12 @@ function showNextMarkersOnStandingPositions(durationMs = 5000, targets = null) {
             }, list[idx] || pid));
             sv.append(token);
 
-            const type = currentMarkers[pid];
+            const type = state.currentMarkers[pid];
             if (type) sv.append(createMarkerIcon(type, x, y - 40, 24));
         });
     });
 
-    markerTimer = setTimeout(() => clearMarkers(), durationMs);
+    state.markerTimer = setTimeout(() => clearMarkers(), durationMs);
 }
 
 /**
@@ -924,8 +926,8 @@ function build(showTowers = false, rotation = 0) {
     }
 
     // 偶数回のとき中央に「過去」「未来」を表示
-    if (currentPastFuture) {
-        const label = currentPastFuture === 'past'
+    if (state.currentPastFuture) {
+        const label = state.currentPastFuture === 'past'
             ? (cfg.lang === 'ja' ? '過去' : 'Past')
             : (cfg.lang === 'ja' ? '未来' : 'Future');
         sv.append(svg('text', {
@@ -934,7 +936,7 @@ function build(showTowers = false, rotation = 0) {
             'text-anchor': 'middle',
             'font-size': 48,
             'font-weight': 700,
-            fill: currentPastFuture === 'past' ? '#3b82f6' : '#ef4444',
+            fill: state.currentPastFuture === 'past' ? '#3b82f6' : '#ef4444',
             opacity: 0.9
         }, label));
     }
@@ -942,7 +944,7 @@ function build(showTowers = false, rotation = 0) {
 
 function createPosIcons() {
     // ポジション選択時は A が北
-    currentPastFuture = null;
+    state.currentPastFuture = null;
     build(false, 0);
     const sv = $('sv');
     const list = NAME[cfg.lang];
@@ -967,17 +969,17 @@ function selectPosition(id, displayName) {
     cfg.me = id;
     $('h2').textContent = displayName;
 
-    currentMarkers = assignOpeningMarkers();
-    firstGroup = computeFirstGroup(currentMarkers);
-    secondGroup = ID.filter(pid => !firstGroup.includes(pid));
-    towerMates = {};
-    towerSide = {};
-    towerTags = {};
-    tagsVisible = false;
-    phaseIndex = 0;
-    currentPastFuture = null;
+    state.currentMarkers = assignOpeningMarkers();
+    state.firstGroup = computeFirstGroup(state.currentMarkers);
+    state.secondGroup = ID.filter(pid => !state.firstGroup.includes(pid));
+    state.towerMates = {};
+    state.towerSide = {};
+    state.towerTags = {};
+    state.tagsVisible = false;
+    state.phaseIndex = 0;
+    state.currentPastFuture = null;
     // Tower 1 開始は D が北 → rotation = 6
-    currentRotation = 6;
+    state.currentRotation = 6;
 
     [...$('sv').querySelectorAll('.pos')].forEach(g => {
         g.style.pointerEvents = 'none';
@@ -991,9 +993,9 @@ function selectPosition(id, displayName) {
     $('msg').textContent = t('memorize');
     drawAllMarkersOnPos();
 
-    const myRun = run;
-    markerTimer = setTimeout(() => {
-        if (myRun !== run) return;
+    const myRun = state.run;
+    state.markerTimer = setTimeout(() => {
+        if (myRun !== state.run) return;
         clearMarkers();
         play();
     }, 5000);
@@ -1071,62 +1073,62 @@ function startSelectPos() {
     $('h2').textContent = '';
     $('b-again').classList.add('hide');
     $('choice').classList.add('hide');
-    currentRotation = 0;
-    currentPastFuture = null;
+    state.currentRotation = 0;
+    state.currentPastFuture = null;
     createPosIcons();
 }
 
 async function play() {
-    const id = ++run;
-    gameOverActive = false;
+    const id = ++state.run;
+    state.gameOverActive = false;
     // Tower 1: D が北
-    currentRotation = 6;
-    currentPastFuture = null;
-    build(true, currentRotation);
+    state.currentRotation = 6;
+    state.currentPastFuture = null;
+    build(true, state.currentRotation);
     clearMarkers();
 
     // towerNum: このフェーズが何回目の塔踏みか（1〜8）。過去/未来・最終判定は null。
     async function doPhase(label, points, isOdd = null, rotateAfter = false, towerNum = null) {
-        if (id !== run || gameOverActive) return false;
+        if (id !== state.run || state.gameOverActive) return false;
 
         // bind/stopタグの表示切り替え：4回目開始時に隠す（8回目では表示しない）
-        if (towerNum === 4) tagsVisible = false;
+        if (towerNum === 4) state.tagsVisible = false;
 
         $('h1').textContent = label;
         $('msg').textContent = t('clickPoint');
 
         // 偶数回の塔のときだけ過去/未来を決定して表示
         if (isOdd === false) {
-            if (!currentPastFuture) {
-                currentPastFuture = Math.random() < 0.5 ? 'past' : 'future';
+            if (!state.currentPastFuture) {
+                state.currentPastFuture = Math.random() < 0.5 ? 'past' : 'future';
             }
         } else if (isOdd === true) {
-            currentPastFuture = null;
+            state.currentPastFuture = null;
         }
-        // isOdd === null（過去未来・最終）は現在の currentPastFuture を維持
+        // isOdd === null（過去未来・最終）は現在の state.currentPastFuture を維持
 
-        build(true, currentRotation);
+        build(true, state.currentRotation);
 
         // 今回塔を踏む組（過去/未来フェーズは towerNum が null なので steppingGroup も null＝非表示）。
-        // 正解判定(standingPos)に使うので、waitClickより前に必ず確定させる。
+        // 正解判定(state.standingPos)に使うので、waitClickより前に必ず確定させる。
         const steppingGroup = towerNum != null ? groupForRound(towerNum) : null;
 
         if (isOdd === true) {
-            phaseIndex = parseInt(label.match(/\d+/)?.[0] || '1');
-            computeStandingPositions('odd', currentMarkers, steppingGroup, towerNum);
+            state.phaseIndex = parseInt(label.match(/\d+/)?.[0] || '1');
+            computeStandingPositions('odd', state.currentMarkers, steppingGroup, towerNum);
         } else if (isOdd === false) {
-            phaseIndex = parseInt(label.match(/\d+/)?.[0] || '2');
-            computeStandingPositions('even', currentMarkers, steppingGroup, towerNum);
+            state.phaseIndex = parseInt(label.match(/\d+/)?.[0] || '2');
+            computeStandingPositions('even', state.currentMarkers, steppingGroup, towerNum);
         }
         renderPersistentTags();
 
         // 過去/未来（全員同じ1点に行く）：過去→南、未来→北 が正解
         const correctKey = (points === POINTS_PAST_FUTURE)
-            ? (currentPastFuture === 'past' ? 'south' : 'north')
+            ? (state.currentPastFuture === 'past' ? 'south' : 'north')
             : null;
 
         const result = await waitClick(points, isHard() ? 6500 : 0, correctKey);
-        if (id !== run) return false;
+        if (id !== state.run) return false;
 
         // Hardモード：間違い・時間切れの瞬間にゲームオーバー（以降のフェーズは進行しない）
         if (isHard() && result && !result.ok) {
@@ -1142,7 +1144,7 @@ async function play() {
             : cfg.meth === 'south'
                 ? sameTowerSteppers(cfg.me, steppingGroup)
                 : [cfg.me, PAIR[cfg.me]].filter(Boolean);
-        // 7回目＝後組(secondGroup)最後の塔、8回目＝先組(firstGroup)最後の塔。
+        // 7回目＝後組(state.secondGroup)最後の塔、8回目＝先組(state.firstGroup)最後の塔。
         // どちらも次に同じ組が塔を踏むことはないため、予兆の張り替え・表示は行わない。
         const isLastTower = towerNum === 7 || towerNum === 8;
 
@@ -1158,8 +1160,8 @@ async function play() {
                 if (towerNum === 3) {
                     // 更新された予兆マークが表示されてから3秒後にbind/stopタグを付与
                     await new Promise(r => setTimeout(r, 3000));
-                    assignTowerTags(steppingGroup, currentMarkers);
-                    tagsVisible = true;
+                    assignTowerTags(steppingGroup, state.currentMarkers);
+                    state.tagsVisible = true;
                     renderPersistentTags();
                     await new Promise(r => setTimeout(r, 1000));
                 } else {
@@ -1172,7 +1174,7 @@ async function play() {
             }
 
             if (rotateAfter) {
-                currentRotation = (currentRotation + 1) % 8;
+                state.currentRotation = (state.currentRotation + 1) % 8;
             }
             return true;
 
@@ -1189,8 +1191,8 @@ async function play() {
                 showNextMarkersOnStandingPositions(3500, displayTargets);
                 if (towerNum === 3) {
                     await new Promise(r => setTimeout(r, 3000));
-                    assignTowerTags(steppingGroup, currentMarkers);
-                    tagsVisible = true;
+                    assignTowerTags(steppingGroup, state.currentMarkers);
+                    state.tagsVisible = true;
                     renderPersistentTags();
                     await new Promise(r => setTimeout(r, 500));
                 } else {
@@ -1203,7 +1205,7 @@ async function play() {
             }
 
             if (rotateAfter) {
-                currentRotation = (currentRotation + 1) % 8;
+                state.currentRotation = (state.currentRotation + 1) % 8;
             }
             return false;
         }
@@ -1229,20 +1231,20 @@ async function play() {
     ];
 
     for (const ph of phases) {
-        if (ph.resetRotationBefore) currentRotation = 0;
+        if (ph.resetRotationBefore) state.currentRotation = 0;
         await doPhase(ph.label, ph.points, ph.isOdd, ph.rotateAfter, ph.towerNum);
-        if (id !== run || gameOverActive) return;
-        if (ph.resetPastFutureAfter) currentPastFuture = null;
+        if (id !== state.run || state.gameOverActive) return;
+        if (ph.resetPastFutureAfter) state.currentPastFuture = null;
     }
 
     // 最後の過去/未来の特別処理：北寄りの点＝とどまる、南寄りの点＝南側へ移動。
     // 過去なら「とどまる」、未来なら「南側へ移動」が正解。
-    const wantChoice = currentPastFuture === 'past' ? 'stay' : 'south';
+    const wantChoice = state.currentPastFuture === 'past' ? 'stay' : 'south';
     $('h1').textContent = 'Final Choice (Stay or South)';
     $('msg').textContent = t('clickPoint');
-    build(true, currentRotation);
+    build(true, state.currentRotation);
     const finalResult = await waitClick(POINTS_FINAL_CHOICE, isHard() ? 5000 : 0, wantChoice);
-    if (id !== run || gameOverActive) return;
+    if (id !== state.run || state.gameOverActive) return;
 
     if (isHard() && finalResult && !finalResult.ok) {
         triggerGameOver();
@@ -1256,7 +1258,7 @@ async function play() {
         $('msg').textContent = t('ng');
         await new Promise(r => setTimeout(r, 1500));
     }
-    currentPastFuture = null;
+    state.currentPastFuture = null;
 
     clearMarkers();
     $('msg').textContent = t('clr');
