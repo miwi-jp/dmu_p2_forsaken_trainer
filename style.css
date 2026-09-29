@@ -1,0 +1,268 @@
+:root {
+    --bg: #eef0f5;
+    --fg: #1a1c26;
+    --card: #fff;
+    --ac: #3b4cc0;
+    --arena: #dfe3ee;
+    --line: #99a;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --bg: #12141c;
+        --fg: #e8eaf2;
+        --card: #1c1f2b;
+        --ac: #8fa0ff;
+        --arena: #232738;
+        --line: #667;
+    }
+}
+
+html,
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+}
+
+main {
+    max-width: 47.5rem;
+    margin: 0 auto;
+    padding: 0.75rem;
+}
+
+.card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 1.25rem 1.75rem;
+    margin-top: 0.625rem;
+}
+
+label {
+    display: block;
+    margin: 1.375rem 0 0.5rem;
+    font-weight: 600;
+}
+
+select,
+button {
+    font: inherit;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--fg);
+    width: 100%;
+}
+
+button.go {
+    background: var(--ac);
+    color: #fff;
+    border: 0;
+    margin-top: 1.75rem;
+    font-weight: 700;
+}
+
+.row {
+    display: flex;
+    gap: 8px;
+}
+
+.seg {
+    display: flex;
+    gap: 2px;
+    background: var(--arena);
+    padding: 0.1875rem;
+    border-radius: 10px;
+}
+
+.seg input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.seg label {
+    flex: 1;
+    display: block;
+    margin: 0;
+    padding: 0.4375rem 0.75rem;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--line);
+    font-weight: 500;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.seg input:checked+label {
+    background: var(--card);
+    color: var(--ac);
+    font-weight: 700;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.seg input:focus-visible+label {
+    outline: 2px solid var(--ac);
+    outline-offset: -2px;
+}
+
+.row button {
+    width: auto;
+    flex: 1;
+}
+
+#hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    margin-bottom: 0.375rem;
+    height: 1.5rem;
+    line-height: 1.5rem;
+    overflow: hidden;
+}
+
+svg {
+    width: 100%;
+    height: auto;
+    max-height: 78vh;
+    background: var(--arena);
+    border-radius: 10px;
+    display: block;
+}
+
+.result-mark {
+    --peak-opacity: 0.2;                        /* ← 濃さ（0〜1） */
+    animation: markFade 0.5s ease-out forwards;  /* ← 表示時間（秒）と速度カーブ。ここを変えればJS側は自動で合わせる */
+    pointer-events: none;
+}
+
+@keyframes markFade {
+    0% {
+        opacity: var(--peak-opacity);
+    }
+
+    70% {
+        opacity: var(--peak-opacity);
+    }
+
+    100% {
+        opacity: 0;
+    }
+}
+
+.pt {
+    fill: #ffd400;
+    stroke: #7a6500;
+    stroke-width: 3;
+    cursor: pointer;
+}
+
+.pt:hover {
+    fill: #fff27a;
+}
+
+.pt.correct {
+    fill: #22c55e;
+    stroke: #15803d;
+}
+
+.pt.wrong {
+    fill: #ef4444;
+    stroke: #991b1b;
+}
+
+.pos {
+    cursor: pointer;
+}
+
+#msg {
+    min-height: 1.6em;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    text-align: center;
+}
+
+.hide {
+    display: none !important;
+}
+
+.info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15em;
+    height: 1.15em;
+    margin-left: 0.25rem;
+    border-radius: 50%;
+    font-size: 0.85em;
+    font-weight: 400;
+    color: var(--ac);
+    cursor: help;
+    position: relative;
+    vertical-align: middle;
+}
+
+.info-icon .tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: 140%;
+    transform: translateX(-50%);
+    background: #2b2f3d;
+    color: #fff;
+    padding: 0.5rem 0.625rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 400;
+    white-space: normal;
+    width: max-content;
+    max-width: 16.25rem;
+    line-height: 1.6;
+    text-align: left;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/* アイコンとの繋がりを示す矢印（吹き出しの下端の三角形） */
+.info-icon .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #2b2f3d;
+}
+
+.info-icon:hover .tooltip,
+.info-icon:focus .tooltip {
+    opacity: 1;
+}
+
+.tip-row {
+    display: block;
+}
+
+.tip-row+.tip-row {
+    margin-top: 0.25rem;
+}
+
+.tip-label {
+    display: inline-block;
+    min-width: 3.6em;
+    margin-right: 0.25rem;
+    padding: 0.0625rem 0.375rem;
+    border-radius: 4px;
+    background: var(--ac);
+    color: #fff;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-align: center;
+}
