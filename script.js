@@ -1148,66 +1148,37 @@ async function play() {
         // どちらも次に同じ組が塔を踏むことはないため、予兆の張り替え・表示は行わない。
         const isLastTower = towerNum === 7 || towerNum === 8;
 
-        if (result && result.ok) {
-            $('msg').textContent = t('ok');
+        if (result) {
+            const ok = result.ok;
+            $('msg').textContent = ok ? t('ok') : t('ng');
 
             if (isOdd !== null && !isLastTower) {
                 recordTowerMates();
                 if (steppingGroup && steppingGroup.length === 4) {
                     reassignAfterTower(steppingGroup, isOdd ? 'odd' : 'even');
                 }
-                showNextMarkersOnStandingPositions(4000, displayTargets);
+                // 正解位置に次予兆を表示（正解時4000ms／不正解時3500ms）
+                showNextMarkersOnStandingPositions(ok ? 4000 : 3500, displayTargets);
                 if (towerNum === 3) {
                     // 更新された予兆マークが表示されてから3秒後にbind/stopタグを付与
                     await new Promise(r => setTimeout(r, 3000));
                     assignTowerTags(steppingGroup, state.currentMarkers);
                     state.tagsVisible = true;
                     renderPersistentTags();
-                    await new Promise(r => setTimeout(r, 1000));
+                    await new Promise(r => setTimeout(r, ok ? 1000 : 500));
                 } else {
-                    await new Promise(r => setTimeout(r, 4000));
+                    await new Promise(r => setTimeout(r, ok ? 4000 : 3500));
                 }
             } else if (towerNum === 7) {
-                await revealOwnTagAfterRound7(800);
+                await revealOwnTagAfterRound7(ok ? 800 : 1500);
             } else {
-                await new Promise(r => setTimeout(r, 800));
+                await new Promise(r => setTimeout(r, ok ? 800 : 1500));
             }
 
             if (rotateAfter) {
                 state.currentRotation = (state.currentRotation + 1) % 8;
             }
-            return true;
-
-        } else if (result) {
-            // 不正解
-            $('msg').textContent = t('ng');
-
-            if (isOdd !== null && !isLastTower) {
-                recordTowerMates();
-                if (steppingGroup && steppingGroup.length === 4) {
-                    reassignAfterTower(steppingGroup, isOdd ? 'odd' : 'even');
-                }
-                // 正解位置に次予兆を表示（自分とペアのみ）
-                showNextMarkersOnStandingPositions(3500, displayTargets);
-                if (towerNum === 3) {
-                    await new Promise(r => setTimeout(r, 3000));
-                    assignTowerTags(steppingGroup, state.currentMarkers);
-                    state.tagsVisible = true;
-                    renderPersistentTags();
-                    await new Promise(r => setTimeout(r, 500));
-                } else {
-                    await new Promise(r => setTimeout(r, 3500));
-                }
-            } else if (towerNum === 7) {
-                await revealOwnTagAfterRound7(1500);
-            } else {
-                await new Promise(r => setTimeout(r, 1500));
-            }
-
-            if (rotateAfter) {
-                state.currentRotation = (state.currentRotation + 1) % 8;
-            }
-            return false;
+            return ok;
         }
         return false;
     }
