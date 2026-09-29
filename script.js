@@ -40,7 +40,7 @@ function roleOf(pid) {
 
 const L = {
     ja: {
-        title: '🤡 絶ケフカ P2 ミッシング練習',
+        title: '🤡 絶妖星乱舞 P2 ミッシング練習',
         lang: '言語', meth: '処理法', difficulty: '難易度', go: 'スタート',
         m: ['優先順＋立ち位置ぴれん', '南調整＋立ち位置ぴれん'],
         difficultyLabels: ['Normal', 'Hard'],
@@ -95,38 +95,38 @@ const SLOT_ODD = {
     1: [342, 597],  // 左塔・頭割り
     2: [588, 560],  // 右塔・頭割り
     3: [342, 696],  // 左塔・扇
-    4: [640, 706],  // 右塔・円
+    4: [650, 706],  // 右塔・円
     5: [342, 750],  // 扇誘導・ヒーラー
     6: [430, 559],  // 左頭割り参加・タンク
     7: [534, 559]   // 右頭割り参加・DPS×2
 };
 
 const SLOT_EVEN = {
-    1: [342, 716],  // 左塔・円
-    2: [622, 716],  // 右塔・円
-    3: [342, 529],  // 左塔・扇
-    4: [622, 529],  // 右塔・扇
-    5: [229, 622],  // 扇誘導・ヒーラー（左端）
-    6: [736, 622],  // 扇誘導・遠隔（右端）
-    7: [383, 369],  // 雑魚誘導・タンク（北西）
-    8: [581, 369]   // 雑魚誘導・近接（北東）
+    1: [346, 716],    // 左塔・円
+    2: [620, 716],    // 右塔・円
+    3: [343, 529],    // 左塔・扇
+    4: [623, 529],    // 右塔・扇
+    5: [229.5, 622],  // 扇誘導・ヒーラー（左端）
+    6: [736.5, 622],  // 扇誘導・遠隔（右端）
+    7: [384, 369],    // 雑魚誘導・タンク（北西）
+    8: [582, 369]     // 雑魚誘導・近接（北東）
 };
 
 // 過去/未来（2・4・6回目後）：北1 + 南1
 const POINTS_PAST_FUTURE = {
-    north: [483, 300],
-    south: [483, 700]
+    north: [463, 295],
+    south: [483, 675]
 };
 
 // 過去/未来（8回目後）：A側のみ
 const POINTS_PAST_FUTURE_A = {
-    a: [483, 250]
+    a: [483, 295]
 };
 
 // 最後の過去/未来の特別処理：Aマーカーの後、「とどまる」（北寄り）か「南側へ移動」（南寄り）を選ぶ
 const POINTS_FINAL_CHOICE = {
-    stay: [483, 250],
-    south: [483, 700]
+    stay: [483, 295],
+    south: [483, 675]
 };
 
 const POINTS_ODD = Object.fromEntries(Object.entries(SLOT_ODD).map(([k, v]) => ['s' + k, v]));
@@ -662,6 +662,7 @@ function triggerGameOver() {
 
 function ui() {
     document.documentElement.lang = cfg.lang;
+    document.title = t('title');
     $('t-title').textContent = t('title');
     $('l-lang').textContent = t('lang');
     $('l-meth').textContent = t('meth');
@@ -895,8 +896,8 @@ function showNextMarkersOnStandingPositions(durationMs = 5000, targets = null) {
 
             const isSelf = pid === cfg.me;
             const token = svg('g', { class: 'player-token' });
-            token.append(svg('circle', {
-                cx: x, cy: y, r: 22,
+            token.append(svg('rect', {
+                x: x - 22, y: y - 22, width: 44, height: 44, rx: 9,
                 fill: isSelf ? ROLE_COLOR[roleOf(pid)].active : DIM_COLOR,
                 stroke: 'none'
             }));
@@ -991,8 +992,8 @@ function createPosIcons() {
         const [x, y] = POS_XY[i];
         const role = roleOf(id);
         const g = svg('g', { class: 'pos', 'data-id': id });
-        g.append(svg('circle', {
-            cx: x, cy: y, r: 34,
+        g.append(svg('rect', {
+            x: x - 34, y: y - 34, width: 68, height: 68, rx: 14,
             fill: ROLE_COLOR[role].muted, stroke: 'none'
         }));
         g.append(svg('text', {
@@ -1024,8 +1025,8 @@ function selectPosition(id, displayName) {
         const gid = g.getAttribute('data-id');
         const isSelected = gid === id;
         g.style.opacity = isSelected ? '1' : '0.55';
-        const circle = g.querySelector('circle');
-        if (circle) circle.setAttribute('fill', ROLE_COLOR[roleOf(gid)][isSelected ? 'active' : 'muted']);
+        const shape = g.querySelector('rect');
+        if (shape) shape.setAttribute('fill', ROLE_COLOR[roleOf(gid)][isSelected ? 'active' : 'muted']);
     });
 
     $('msg').textContent = t('memorize');
