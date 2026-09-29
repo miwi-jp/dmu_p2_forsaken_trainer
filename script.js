@@ -139,6 +139,37 @@ const POS_XY = [
 ];
 
 let cfg = { lang: 'ja', meth: 'pri', me: null, mode: 'normal' };
+
+// 最初の画面の選択（言語・処理法・ゲームモード）をブラウザに一時保存する。
+// 保存期限は24時間。更新やゲームクリア後の「最初から」で選択肢が変わってしまうのを防ぐため。
+const CFG_STORAGE_KEY = 'missingTrainerCfg';
+const CFG_STORAGE_MS = 24 * 60 * 60 * 1000; // 24時間
+
+function saveCfg() {
+    try {
+        localStorage.setItem(CFG_STORAGE_KEY, JSON.stringify({
+            lang: cfg.lang, meth: cfg.meth, mode: cfg.mode,
+            savedAt: Date.now()
+        }));
+    } catch (e) { /* localStorageが使えない環境（プライベートモード等）では何もしない */ }
+}
+
+function loadCfg() {
+    try {
+        const raw = localStorage.getItem(CFG_STORAGE_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        const expired = !saved.savedAt || (Date.now() - saved.savedAt) > CFG_STORAGE_MS;
+        if (expired) {
+            localStorage.removeItem(CFG_STORAGE_KEY);
+            return;
+        }
+        if (saved.lang) cfg.lang = saved.lang;
+        if (saved.meth) cfg.meth = saved.meth;
+        if (saved.mode) cfg.mode = saved.mode;
+    } catch (e) { /* 保存データが壊れている場合は無視 */ }
+}
+
 let state = {
     run: 0,
     gameOverActive: false, // Hardモードで間違えた/時間切れになった瞬間trueにし、以降のフェーズ進行を止める
@@ -662,9 +693,9 @@ function ui() {
             el.append(inp, lab);
         });
     };
-    fillSeg($('s-lang'), 'lang', [['ja', '日本語'], ['en', 'English']], cfg.lang, v => { cfg.lang = v; ui(); });
-    fillSeg($('s-meth'), 'meth', [['pri', t('m')[0]], ['south', t('m')[1]]], cfg.meth, v => cfg.meth = v);
-    fillSeg($('s-mode'), 'mode', [['normal', t('md')[0]], ['hard', t('md')[1]]], cfg.mode, v => cfg.mode = v);
+    fillSeg($('s-lang'), 'lang', [['ja', '日本語'], ['en', 'English']], cfg.lang, v => { cfg.lang = v; saveCfg(); ui(); });
+    fillSeg($('s-meth'), 'meth', [['pri', t('m')[0]], ['south', t('m')[1]]], cfg.meth, v => { cfg.meth = v; saveCfg(); });
+    fillSeg($('s-mode'), 'mode', [['normal', t('md')[0]], ['hard', t('md')[1]]], cfg.mode, v => { cfg.mode = v; saveCfg(); });
     $('c-stay').textContent = t('stay');
     $('c-south').textContent = t('south');
     $('b-again').textContent = t('again');
@@ -683,6 +714,7 @@ $('b-again').onclick = () => {
     ui();
 };
 
+loadCfg();
 ui();
 
 function createMarkerIcon(type, x, y, size = 28) {
