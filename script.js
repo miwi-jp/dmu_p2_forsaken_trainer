@@ -896,8 +896,8 @@ function showNextMarkersOnStandingPositions(durationMs = 5000, targets = null) {
 
             const isSelf = pid === cfg.me;
             const token = svg('g', { class: 'player-token' });
-            token.append(svg('circle', {
-                cx: x, cy: y, r: 22,
+            token.append(svg('rect', {
+                x: x - 22, y: y - 22, width: 44, height: 44, rx: 9,
                 fill: isSelf ? ROLE_COLOR[roleOf(pid)].active : DIM_COLOR,
                 stroke: 'none'
             }));
@@ -992,8 +992,8 @@ function createPosIcons() {
         const [x, y] = POS_XY[i];
         const role = roleOf(id);
         const g = svg('g', { class: 'pos', 'data-id': id });
-        g.append(svg('circle', {
-            cx: x, cy: y, r: 34,
+        g.append(svg('rect', {
+            x: x - 34, y: y - 34, width: 68, height: 68, rx: 14,
             fill: ROLE_COLOR[role].muted, stroke: 'none'
         }));
         g.append(svg('text', {
@@ -1025,8 +1025,8 @@ function selectPosition(id, displayName) {
         const gid = g.getAttribute('data-id');
         const isSelected = gid === id;
         g.style.opacity = isSelected ? '1' : '0.55';
-        const circle = g.querySelector('circle');
-        if (circle) circle.setAttribute('fill', ROLE_COLOR[roleOf(gid)][isSelected ? 'active' : 'muted']);
+        const shape = g.querySelector('rect');
+        if (shape) shape.setAttribute('fill', ROLE_COLOR[roleOf(gid)][isSelected ? 'active' : 'muted']);
     });
 
     $('msg').textContent = t('memorize');
