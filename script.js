@@ -13,7 +13,6 @@ const PAIR = { MT: 'H1', H1: 'MT', ST: 'H2', H2: 'ST', D1: 'D3', D3: 'D1', D2: '
 const PAIRS = [['MT', 'H1'], ['ST', 'H2'], ['D1', 'D3'], ['D2', 'D4']];
 const TH_GROUP = ['MT', 'ST', 'H1', 'H2'];
 const DPS_GROUP = ['D1', 'D2', 'D3', 'D4'];
-const PRI = { H1: 0, H2: 1, MT: 2, ST: 3, D1: 4, D2: 5, D3: 6, D4: 7 };
 // ロール判定（優先順位 ヒラ＞タンク＞近接＞遠隔 の実装に使用）
 const TANKS = ['MT', 'ST'];
 const HEALERS = ['H1', 'H2'];
@@ -180,7 +179,6 @@ let state = {
     standingSlot: {},
     towerMates: {},
     towerSide: {},
-    phaseIndex: 0,
     markerTimer: null,
     currentRotation: 0,
     currentPastFuture: null, // 'past' | 'future' | null
@@ -194,9 +192,7 @@ const MARKER_STROKE = '#c46a00';
 function t(key) { return L[cfg.lang][key]; }
 
 function markerNames() {
-    return cfg.lang === 'ja'
-        ? { stack: '頭割り', cone: '扇', circ: '円' }
-        : { stack: 'Stack', cone: 'Cone', circ: 'Circle' };
+    return { stack: t('stack'), cone: t('cone'), circ: t('circ') };
 }
 
 function shuffle(arr) {
@@ -1002,7 +998,6 @@ function selectPosition(id, displayName) {
     state.towerSide = {};
     state.towerTags = {};
     state.tagsVisible = false;
-    state.phaseIndex = 0;
     state.currentPastFuture = null;
     // Tower 1 開始は D が北 → rotation = 6
     state.currentRotation = 6;
@@ -1140,10 +1135,8 @@ async function play() {
         const steppingGroup = towerNum != null ? groupForRound(towerNum) : null;
 
         if (isOdd === true) {
-            state.phaseIndex = parseInt(label.match(/\d+/)?.[0] || '1');
             computeStandingPositions('odd', state.currentMarkers, steppingGroup, towerNum);
         } else if (isOdd === false) {
-            state.phaseIndex = parseInt(label.match(/\d+/)?.[0] || '2');
             computeStandingPositions('even', state.currentMarkers, steppingGroup, towerNum);
         }
         renderPersistentTags();
