@@ -61,7 +61,7 @@ const L = {
         gameover: 'ゲームオーバー（正解位置を確認してください）'
     },
     en: {
-        title: '🤡 Dancing Mad P2 Missing Trainer',
+        title: '🤡 Dancing Mad P2 Forsaken Trainer',
         lang: 'Language', meth: 'Strategy', difficulty: 'Difficulty', go: 'Start',
         m: ['Priority + Piren', 'South Adjust + Piren'],
         difficultyLabels: ['Normal', 'Hard'],
