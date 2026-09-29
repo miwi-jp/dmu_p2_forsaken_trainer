@@ -40,7 +40,7 @@ function roleOf(pid) {
 
 const L = {
     ja: {
-        title: '🤡 絶ケフカ P2 ミッシング練習',
+        title: '🤡 絶妖星乱舞 P2 ミッシング練習',
         lang: '言語', meth: '処理法', difficulty: '難易度', go: 'スタート',
         m: ['優先順＋立ち位置ぴれん', '南調整＋立ち位置ぴれん'],
         difficultyLabels: ['Normal', 'Hard'],
