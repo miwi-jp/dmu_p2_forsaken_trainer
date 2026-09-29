@@ -181,6 +181,16 @@ function isHealerOrRanged(pid) {
     return pid === 'H1' || pid === 'H2' || pid === 'D3' || pid === 'D4';
 }
 
+// 塔を踏まない4人（escort）の固定スロット：ヒーラー→5、遠隔→6、タンク→7、近接→8
+// （assignEvenSlots・assignFinalTowerSlots・resolveEven2Slotで共通して使用）
+function escortSlot(pid) {
+    if (isHealer(pid)) return 5;
+    if (isRanged(pid)) return 6;
+    if (isTank(pid)) return 7;
+    if (isMelee(pid)) return 8;
+    return 5; // 念のためのフォールバック
+}
+
 function assignOpeningMarkers() {
     const { stack, cone, circ } = markerNames();
     const markers = {};
@@ -381,12 +391,7 @@ function assignEvenSlots(markers, steppingGroup) {
         }
     });
 
-    escort.forEach(pid => {
-        if (isHealer(pid)) slotMap[pid] = 5;
-        else if (isRanged(pid)) slotMap[pid] = 6;
-        else if (isTank(pid)) slotMap[pid] = 7;
-        else if (isMelee(pid)) slotMap[pid] = 8;
-    });
+    escort.forEach(pid => { slotMap[pid] = escortSlot(pid); });
 
     return slotMap;
 }
@@ -415,12 +420,7 @@ function assignFinalTowerSlots(steppingGroup) {
         if (slotMap[pid] == null) slotMap[pid] = 1;
     });
 
-    escort.forEach(pid => {
-        if (isHealer(pid)) slotMap[pid] = 5;
-        else if (isRanged(pid)) slotMap[pid] = 6;
-        else if (isTank(pid)) slotMap[pid] = 7;
-        else if (isMelee(pid)) slotMap[pid] = 8;
-    });
+    escort.forEach(pid => { slotMap[pid] = escortSlot(pid); });
 
     return slotMap;
 }
@@ -445,13 +445,7 @@ function resolveEven2Slot(pid, markers, steppingGroup) {
     const mine = markers[pid];
     const isStepping = steppingGroup.includes(pid);
 
-    if (!isStepping) {
-        if (isHealer(pid)) return 5;
-        if (isRanged(pid)) return 6;
-        if (isTank(pid)) return 7;
-        if (isMelee(pid)) return 8;
-        return 5;
-    }
+    if (!isStepping) return escortSlot(pid);
 
     const mates = (state.towerMates[pid] || []).filter(p => p !== pid && steppingGroup.includes(p));
     const mySide = state.towerSide[pid];
