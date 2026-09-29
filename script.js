@@ -767,10 +767,10 @@ function createTagIcon(tag, x, y, size = 28) {
     }
 
     // 右下に数字バッジ（見やすいよう大きめに）
-    g.append(svg('circle', { cx: x + r * 0.75, cy: y + r * 0.75, r: r * 0.62, fill: badgeBg }));
+    g.append(svg('circle', { cx: x + r * 0.75, cy: y + r * 0.75, r: r * 0.75, fill: badgeBg }));
     g.append(svg('text', {
-        x: x + r * 0.75, y: y + r * 0.75 + r * 0.32, 'text-anchor': 'middle',
-        'font-size': r * 0.95, 'font-weight': 700, fill: '#fff'
+        x: x + r * 0.75, y: y + r * 0.75 + r * 0.45, 'text-anchor': 'middle',
+        'font-size': r * 1.35, 'font-weight': 700, fill: '#fff'
     }, num));
 
     return g;
