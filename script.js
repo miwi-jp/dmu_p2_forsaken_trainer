@@ -30,6 +30,9 @@ const ROLE_COLOR = {
     healer: { muted: '#3f7355', active: '#22c55e' },
     dps: { muted: '#8c3b3b', active: '#ef4444' }
 };
+// ゲームプレイ中、自分以外の立ち位置アイコンに使うグレー（ロールに関係なく統一。
+// 自分の鮮やかな色とはっきり差が出るよう、あえて無彩色にしている。不透明なので下の黄色い点は透けない）
+const DIM_COLOR = '#5c6068';
 function roleOf(pid) {
     if (isTank(pid)) return 'tank';
     if (isHealer(pid)) return 'healer';
@@ -567,7 +570,7 @@ function showResultMark(ok) {
 
     if (ok) {
         g.append(svg('circle', {
-            cx, cy, r: 300,                                       // ← ○の半径（大きさ）
+            cx, cy, r: 270,                                       // ← ○の半径（大きさ）
             fill: 'none', stroke: '#22c55e', 'stroke-width': 100   // ← ○の線の色・太さ
         }));
     } else {
@@ -849,10 +852,11 @@ function showNextMarkersOnStandingPositions(durationMs = 5000, targets = null) {
             const x = base[0] + (group.length > 1 ? (i - (group.length - 1) / 2) * 36 : 0);
             const y = base[1];
 
+            const isSelf = pid === cfg.me;
             const token = svg('g', { class: 'player-token' });
             token.append(svg('circle', {
                 cx: x, cy: y, r: 22,
-                fill: ROLE_COLOR[roleOf(pid)][pid === cfg.me ? 'active' : 'muted'],
+                fill: isSelf ? ROLE_COLOR[roleOf(pid)].active : DIM_COLOR,
                 stroke: 'none'
             }));
             const idx = ID.indexOf(pid);
