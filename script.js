@@ -1211,46 +1211,29 @@ async function play() {
     }
 
     // ========== フルフロー ==========
-    await doPhase('Tower 1/8 (Odd)', POINTS_ODD, true, true, 1);
-    if (id !== run || gameOverActive) return;
+    // 各フェーズの設定を配列にまとめ、ループで順に実行する（doPhaseの呼び出しパターン自体は変更なし）
+    const phases = [
+        { label: 'Tower 1/8 (Odd)', points: POINTS_ODD, isOdd: true, rotateAfter: true, towerNum: 1 },
+        { label: 'Tower 2/8 (Even)', points: POINTS_EVEN, isOdd: false, rotateAfter: true, towerNum: 2 },
+        { label: 'Past / Future 1', points: POINTS_PAST_FUTURE, isOdd: null, rotateAfter: false, towerNum: null, resetPastFutureAfter: true },
+        { label: 'Tower 3/8 (Odd)', points: POINTS_ODD, isOdd: true, rotateAfter: true, towerNum: 3 },
+        { label: 'Tower 4/8 (Even)', points: POINTS_EVEN, isOdd: false, rotateAfter: true, towerNum: 4 },
+        { label: 'Past / Future 2', points: POINTS_PAST_FUTURE, isOdd: null, rotateAfter: false, towerNum: null, resetPastFutureAfter: true },
+        { label: 'Tower 5/8 (Odd)', points: POINTS_ODD, isOdd: true, rotateAfter: true, towerNum: 5 },
+        { label: 'Tower 6/8 (Even)', points: POINTS_EVEN, isOdd: false, rotateAfter: true, towerNum: 6 },
+        { label: 'Past / Future 3', points: POINTS_PAST_FUTURE, isOdd: null, rotateAfter: false, towerNum: null, resetPastFutureAfter: true },
+        { label: 'Tower 7/8 (Odd)', points: POINTS_ODD, isOdd: true, rotateAfter: true, towerNum: 7 },
+        // Tower 8: Aが北・回転しない
+        { label: 'Tower 8/8 (Even)', points: POINTS_EVEN, isOdd: false, rotateAfter: false, towerNum: 8, resetRotationBefore: true },
+        { label: 'Past / Future 4 (A side)', points: POINTS_PAST_FUTURE_A, isOdd: null, rotateAfter: false, towerNum: null }
+    ];
 
-    await doPhase('Tower 2/8 (Even)', POINTS_EVEN, false, true, 2);
-    if (id !== run || gameOverActive) return;
-
-    await doPhase('Past / Future 1', POINTS_PAST_FUTURE, null, false);
-    if (id !== run || gameOverActive) return;
-    currentPastFuture = null;
-
-    await doPhase('Tower 3/8 (Odd)', POINTS_ODD, true, true, 3);
-    if (id !== run || gameOverActive) return;
-
-    await doPhase('Tower 4/8 (Even)', POINTS_EVEN, false, true, 4);
-    if (id !== run || gameOverActive) return;
-
-    await doPhase('Past / Future 2', POINTS_PAST_FUTURE, null, false);
-    if (id !== run || gameOverActive) return;
-    currentPastFuture = null;
-
-    await doPhase('Tower 5/8 (Odd)', POINTS_ODD, true, true, 5);
-    if (id !== run || gameOverActive) return;
-
-    await doPhase('Tower 6/8 (Even)', POINTS_EVEN, false, true, 6);
-    if (id !== run || gameOverActive) return;
-
-    await doPhase('Past / Future 3', POINTS_PAST_FUTURE, null, false);
-    if (id !== run || gameOverActive) return;
-    currentPastFuture = null;
-
-    await doPhase('Tower 7/8 (Odd)', POINTS_ODD, true, true, 7);
-    if (id !== run || gameOverActive) return;
-
-    // Tower 8: Aが北・回転しない
-    currentRotation = 0;
-    await doPhase('Tower 8/8 (Even)', POINTS_EVEN, false, false, 8);
-    if (id !== run || gameOverActive) return;
-
-    await doPhase('Past / Future 4 (A side)', POINTS_PAST_FUTURE_A, null, false);
-    if (id !== run || gameOverActive) return;
+    for (const ph of phases) {
+        if (ph.resetRotationBefore) currentRotation = 0;
+        await doPhase(ph.label, ph.points, ph.isOdd, ph.rotateAfter, ph.towerNum);
+        if (id !== run || gameOverActive) return;
+        if (ph.resetPastFutureAfter) currentPastFuture = null;
+    }
 
     // 最後の過去/未来の特別処理：北寄りの点＝とどまる、南寄りの点＝南側へ移動。
     // 過去なら「とどまる」、未来なら「南側へ移動」が正解。
