@@ -41,10 +41,10 @@ function roleOf(pid) {
 const L = {
     ja: {
         title: '🤡 絶ケフカ P2 ミッシング練習',
-        lang: '言語', meth: '処理法', mode: 'ゲームモード', go: 'スタート',
+        lang: '言語', meth: '処理法', difficulty: '難易度', go: 'スタート',
         m: ['優先順＋立ち位置ぴれん', '南調整＋立ち位置ぴれん'],
-        md: ['Normal', 'Hard'],
-        modeInfo: [
+        difficultyLabels: ['Normal', 'Hard'],
+        difficultyInfo: [
             { label: 'Normal', desc: '時間制限はなく、間違えてもゲームを続行できます。' },
             { label: 'Hard', desc: '時間制限があり、間違えるとその場でゲームオーバーになります。' }
         ],
@@ -62,10 +62,10 @@ const L = {
     },
     en: {
         title: '🤡 Dancing Mad P2 Missing Trainer',
-        lang: 'Language', meth: 'Strategy', mode: 'Mode', go: 'Start',
+        lang: 'Language', meth: 'Strategy', difficulty: 'Difficulty', go: 'Start',
         m: ['Priority + Piren', 'South Adjust + Piren'],
-        md: ['Normal', 'Hard'],
-        modeInfo: [
+        difficultyLabels: ['Normal', 'Hard'],
+        difficultyInfo: [
             { label: 'Normal', desc: 'No time limit, and you can keep going even if you get it wrong.' },
             { label: 'Hard', desc: 'Timed, and a single wrong answer ends the game immediately.' }
         ],
@@ -137,7 +137,7 @@ const POS_XY = [
     [323, 680], [423, 680], [543, 680], [643, 680]
 ];
 
-let cfg = { lang: 'ja', meth: 'pri', me: null, mode: 'normal' };
+let cfg = { lang: 'ja', meth: 'pri', me: null, difficulty: 'normal' };
 
 // 最初の画面の選択（言語・処理法・ゲームモード）をブラウザに一時保存する。
 // 保存期限は24時間。更新やゲームクリア後の「最初から」で選択肢が変わってしまうのを防ぐため。
@@ -147,7 +147,7 @@ const CFG_STORAGE_MS = 24 * 60 * 60 * 1000; // 24時間
 function saveCfg() {
     try {
         localStorage.setItem(CFG_STORAGE_KEY, JSON.stringify({
-            lang: cfg.lang, meth: cfg.meth, mode: cfg.mode,
+            lang: cfg.lang, meth: cfg.meth, difficulty: cfg.difficulty,
             savedAt: Date.now()
         }));
     } catch (e) { /* localStorageが使えない環境（プライベートモード等）では何もしない */ }
@@ -165,7 +165,7 @@ function loadCfg() {
         }
         if (saved.lang) cfg.lang = saved.lang;
         if (saved.meth) cfg.meth = saved.meth;
-        if (saved.mode) cfg.mode = saved.mode;
+        if (saved.difficulty) cfg.difficulty = saved.difficulty;
     } catch (e) { /* 保存データが壊れている場合は無視 */ }
 }
 
@@ -578,7 +578,7 @@ function isClickCorrect(x, y) {
     return Math.hypot(x - me[0], y - me[1]) < 30;
 }
 
-function isHard() { return cfg.mode === 'hard'; }
+function isHard() { return cfg.difficulty === 'hard'; }
 
 // 正解/不正解の瞬間、盤面中央に大きな○（緑）／×（赤）を一瞬表示してフェードアウトさせる
 function showResultMark(ok) {
@@ -665,8 +665,8 @@ function ui() {
     $('t-title').textContent = t('title');
     $('l-lang').textContent = t('lang');
     $('l-meth').textContent = t('meth');
-    $('l-mode-text').textContent = t('mode');
-    $('i-mode-tip').innerHTML = t('modeInfo')
+    $('l-difficulty-text').textContent = t('difficulty');
+    $('i-difficulty-tip').innerHTML = t('difficultyInfo')
         .map(m => `<span class="tip-row"><span class="tip-label">${m.label}</span>${m.desc}</span>`)
         .join('');
     $('b-go').textContent = t('go');
@@ -691,7 +691,7 @@ function ui() {
     };
     fillSeg($('s-lang'), 'lang', [['ja', '日本語'], ['en', 'English']], cfg.lang, v => { cfg.lang = v; saveCfg(); ui(); });
     fillSeg($('s-meth'), 'meth', [['pri', t('m')[0]], ['south', t('m')[1]]], cfg.meth, v => { cfg.meth = v; saveCfg(); });
-    fillSeg($('s-mode'), 'mode', [['normal', t('md')[0]], ['hard', t('md')[1]]], cfg.mode, v => { cfg.mode = v; saveCfg(); });
+    fillSeg($('s-difficulty'), 'difficulty', [['normal', t('difficultyLabels')[0]], ['hard', t('difficultyLabels')[1]]], cfg.difficulty, v => { cfg.difficulty = v; saveCfg(); });
     $('c-stay').textContent = t('stay');
     $('c-south').textContent = t('south');
     $('b-again').textContent = t('again');
