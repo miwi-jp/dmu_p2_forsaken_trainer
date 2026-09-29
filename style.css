@@ -220,7 +220,7 @@ svg {
     font-weight: 400;
     white-space: normal;
     width: max-content;
-    max-width: 16.25rem;
+    max-width: min(16.25rem, calc(100vw - 2.5rem));
     line-height: 1.6;
     text-align: left;
     opacity: 0;

@@ -713,6 +713,23 @@ $('b-again').onclick = () => {
 loadCfg();
 ui();
 
+// ツールチップが画面端をはみ出す場合、はみ出した分だけ横にずらして画面内に収める
+function positionTooltip(icon) {
+    const tip = icon.querySelector('.tooltip');
+    if (!tip) return;
+    tip.style.transform = '';
+    const rect = tip.getBoundingClientRect();
+    const margin = 8;
+    let shift = 0;
+    if (rect.left < margin) shift = margin - rect.left;
+    else if (rect.right > window.innerWidth - margin) shift = (window.innerWidth - margin) - rect.right;
+    tip.style.transform = shift ? `translateX(calc(-50% + ${shift}px))` : '';
+}
+document.querySelectorAll('.info-icon').forEach(icon => {
+    icon.addEventListener('mouseenter', () => positionTooltip(icon));
+    icon.addEventListener('focus', () => positionTooltip(icon));
+});
+
 function createMarkerIcon(type, x, y, size = 28) {
     const g = svg('g', { class: 'head-marker' });
     const r = size / 2;
