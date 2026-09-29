@@ -662,6 +662,7 @@ function triggerGameOver() {
 
 function ui() {
     document.documentElement.lang = cfg.lang;
+    document.title = t('title');
     $('t-title').textContent = t('title');
     $('l-lang').textContent = t('lang');
     $('l-meth').textContent = t('meth');
