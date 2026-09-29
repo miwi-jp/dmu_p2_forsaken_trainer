@@ -645,20 +645,31 @@ function ui() {
         .join('');
     $('b-go').textContent = t('go');
     $('t-hint').textContent = t('hint');
-    const fill = (el, arr) => {
+    // ラジオボタン（丸は非表示にし、選択中のものをボタンごとハイライトする見た目）を生成する
+    const fillSeg = (el, name, arr, current, onChange) => {
         el.innerHTML = '';
-        arr.forEach(([v, txt]) => el.add(new Option(txt, v)));
+        arr.forEach(([v, txt]) => {
+            const id = `${name}-${v}`;
+            const inp = document.createElement('input');
+            inp.type = 'radio';
+            inp.name = name;
+            inp.id = id;
+            inp.value = v;
+            inp.checked = (v === current);
+            inp.onchange = () => onChange(v);
+            const lab = document.createElement('label');
+            lab.htmlFor = id;
+            lab.textContent = txt;
+            el.append(inp, lab);
+        });
     };
-    fill($('s-meth'), [['pri', t('m')[0]], ['south', t('m')[1]]]);
-    fill($('s-mode'), [['normal', t('md')[0]], ['hard', t('md')[1]]]);
+    fillSeg($('s-lang'), 'lang', [['ja', '日本語'], ['en', 'English']], cfg.lang, v => { cfg.lang = v; ui(); });
+    fillSeg($('s-meth'), 'meth', [['pri', t('m')[0]], ['south', t('m')[1]]], cfg.meth, v => cfg.meth = v);
+    fillSeg($('s-mode'), 'mode', [['normal', t('md')[0]], ['hard', t('md')[1]]], cfg.mode, v => cfg.mode = v);
     $('c-stay').textContent = t('stay');
     $('c-south').textContent = t('south');
     $('b-again').textContent = t('again');
 }
-
-$('s-lang').onchange = e => { cfg.lang = e.target.value; ui(); };
-$('s-meth').onchange = e => cfg.meth = e.target.value;
-$('s-mode').onchange = e => cfg.mode = e.target.value;
 
 $('b-go').onclick = () => {
     $('start').classList.add('hide');
