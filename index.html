@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>絶ケフカ P2 ミッシング Trainer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <main>
+        <section id="start" class="card">
+            <h2 id="t-title">絶ケフカ P2 ミッシング練習</h2>
+            <label id="l-lang">言語</label>
+            <select id="s-lang">
+                <option value="ja">日本語</option>
+                <option value="en">English</option>
+            </select>
+            <label id="l-meth">処理法</label>
+            <select id="s-meth"></select>
+            <label id="l-mode">
+                <span id="l-mode-text">ゲームモード</span>
+                <span id="i-mode" class="info-icon" tabindex="0">&#9432;<span class="tooltip" id="i-mode-tip"></span></span>
+            </label>
+            <select id="s-mode"></select>
+            <button class="go" id="b-go">スタート</button>
+            <p id="t-hint" style="font-size:0.9em;color:#666;margin-top:12px;text-align:center;">
+                スタート後、フィールド上のポジションをクリックして選択してください
+            </p>
+        </section>
+
+        <section id="game" class="hide">
+            <div id="hd">
+                <span id="h1"></span>
+                <span id="h2"></span>
+            </div>
+            <svg id="sv" viewBox="0 0 966 966"></svg>
+            <div id="msg"></div>
+            <div class="row">
+                <button id="b-again" class="hide">最初から</button>
+            </div>
+            <div class="row hide" id="choice">
+                <button id="c-stay">とどまる</button>
+                <button id="c-south">南側へ移動</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
